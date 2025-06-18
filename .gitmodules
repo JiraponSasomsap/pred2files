@@ -1,0 +1,3 @@
+[submodule "submodules/cv3"]
+	path = submodules/cv3
+	url = https://github.com/JiraponSasomsap/cv3.git
