@@ -1,5 +1,14 @@
 from pathlib import Path
 import numpy as np
+from dataclasses import dataclass
+
+@dataclass
+class NPYResult:
+    bounding_boxes = None
+    bounding_boxes_norm = None
+    center = None
+    center_norm = None
+
 
 class GetResultsNumpy:
     def __init__(self, pred_files, frame_gap):
@@ -10,6 +19,7 @@ class GetResultsNumpy:
         self.end_frame = np.inf * -1
         self.map_checkpoint = None
         self.data_checkpoint = None
+        self._data = NPYResult()
 
         for file in self.pred_files.glob('*'):
             frame_len = file.stem.split('.')[0]
@@ -33,8 +43,8 @@ class GetResultsNumpy:
                 self.map_checkpoint = m
                 self.data_checkpoint = self._load_results(m[1])
                 return m
-    
-    def get_results(self, iframe:int):
+            
+    def get_raw_results(self, iframe:int):
         iframe = iframe-1
         if self.map_checkpoint is None:
             self._get_mapped(iframe)
@@ -48,8 +58,36 @@ class GetResultsNumpy:
         # index = iframe - self.map_checkpoint[0][0]
         index = iframe % self.frame_gap
         return self.data_checkpoint[index]
+    
+    def get_results(self, iframe, frame) -> NPYResult:
+        h,w = frame.shape[:2]
+        bboxes = []
+        bboxes_norm = []
+        center = []
+        center_norm = []
 
-    def get_results_conv(self, iframe , frame):
-        h, w = frame.shape[:2]
-        boxes = [[box[0]*w, box[1]*h, box[2]*w, box[3]*h] if len(box) > 0 else [] for box in self.get_results(iframe=iframe)]
-        return boxes
+        for box in self.get_raw_results(iframe=iframe):
+            if len(box) == 0:
+                bboxes.append(np.empty((0 ,4)))
+                bboxes_norm.append(np.empty((0 ,4)))
+                center.append(np.empty(0, 2))
+                center_norm.append(np.empty(0, 2))
+            elif len(box) == 4:
+                # center
+                b1, b2 = box.reshape(2, 2)
+                ct = ((b2 - b1) / 2) + b1
+                center_norm.append(ct)
+                center.append(ct * [w,h])
+                
+                # bounding boxes
+                bboxes_norm.append(np.array(box, dtype=np.float32))
+                box = [box[0]*w, box[1]*h, box[2]*w, box[3]*h]
+                bboxes.append(np.array(box, dtype=np.float32))
+            else:
+                raise ValueError(f"Invalid bounding box length: {len(box)} → {box}")
+        
+        self._data.bounding_boxes = bboxes
+        self._data.bounding_boxes_norm = bboxes_norm
+        self._data.center = center
+        self._data.center_norm = center_norm
+        return self._data
