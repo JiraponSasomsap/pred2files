@@ -40,8 +40,8 @@ class BaseSave:
     def _gen_parent(self):
         source = Path(self.config['path']['source_path'])
         self.save_as = self.save_as if self.save_as else source
-        parent_path = self.save_as.parent / source.stem
-        parent_path.mkdir(exist_ok=True)
+        parent_path = self.save_as / source.stem
+        parent_path.mkdir(parents=True,exist_ok=True)
         return parent_path
     
     def save_config(self, save_as:Path):
