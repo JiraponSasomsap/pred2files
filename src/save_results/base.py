@@ -3,13 +3,14 @@ from pathlib import Path
 import yaml
 
 class BaseSave:
-    def __init__(self, save_as:str|Path=None):
+    def __init__(self, save_as:str|Path=None, max_buffer_len:int=1000):
         self.save_type = None
         self.save_as = Path(save_as) if save_as else None
-        self.counter = 0
-        self._counter_checkpoint = self.counter
+        self.counter = 0 # Start from 0
+        self.counter_checkpoint = 1
         self.data = []
         self.config = {}
+        self.max_buffer_len = max_buffer_len  # Default buffer length
 
     def set_config(self, model_path:Path, video_path:Path, fps:int, max_frame_count:int):
         self.config = {
@@ -33,7 +34,7 @@ class BaseSave:
         '''{start-frame}-{end-frame}.{source}.{model}'''
         model_path = Path(self.config['path']['model_path'])
         source = Path(self.config['path']['source_path'])
-        filename = f'{self._counter_checkpoint}-{self.counter-1}.{source.stem}.{model_path.stem}'
+        filename = f'{self.counter_checkpoint}-{self.counter}.{source.stem}.{model_path.stem}'
         return filename
     
     def _gen_parent(self):
@@ -47,3 +48,4 @@ class BaseSave:
         file = save_as / "info.yaml"
         with open(file, 'w') as f:
             yaml.dump(self.config, f, default_flow_style=False, sort_keys=False)
+        return self
