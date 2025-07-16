@@ -1,5 +1,6 @@
-from .numpy import SaveNumpy
+from .save_np import SaveFileNPy, SaveFileNPz
 
 __all__ = [
-    'SaveNumpy',
+    'SaveFileNPy',
+    'SaveFileNPz',
 ]

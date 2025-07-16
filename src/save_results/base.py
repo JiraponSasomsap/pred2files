@@ -1,7 +1,6 @@
-import numpy as np
 from pathlib import Path
 
-class BaseSave:
+class BaseNumpySaveFile:
     def __init__(self,
                  save_as:str|Path, 
                  name:str,

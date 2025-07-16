@@ -2,9 +2,9 @@ import numpy as np
 from pathlib import Path
 import yaml
 
-from .base import BaseSave
-    
-class SaveNumpy(BaseSave):
+from .base import BaseNumpySaveFile
+
+class SaveFileNPy(BaseNumpySaveFile):
     def __init__(self, 
                  save_as, 
                  name, 
@@ -45,6 +45,16 @@ class SaveNumpy(BaseSave):
 
         return parent
     
+class SaveFileNPz(BaseNumpySaveFile):
+    def __init__(self, 
+                save_as, 
+                name, 
+                model_name_stem, 
+                project="results-npz",
+                max_buffer_len = 1000):
+        super().__init__(save_as, name, model_name_stem, max_buffer_len)
+        self.project = project
+    
     def dump_npz(self, parent=None):
         """Dump the data to a .npz file."""
         if len(self.data) == 0:
@@ -58,13 +68,16 @@ class SaveNumpy(BaseSave):
         file = parent / f"{filename}.npz"
         
         df = {}
-        
+
         for data in self.data:
             for key, val in data.items():
                 if key not in df:
                     df[key] = [val]
                 else:
                     df[key].append(val)
+
+        for key in df:
+            df[key] = np.array(df[key], dtype=object)
 
         np.savez(file, **df)
 
